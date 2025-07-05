@@ -2,12 +2,12 @@
 import { initializeApp } from "firebase/app";
 import { query, where, getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 const firebaseConfig = {
-  apiKey: "AIzaSyDkv_F6rcDG6kX4N-r6TZaGP9TwMkY5jHw",
-  authDomain: "ingutengu-ecf5e.firebaseapp.com",
-  projectId: "ingutengu-ecf5e",
-  storageBucket: "ingutengu-ecf5e.firebasestorage.app",
-  messagingSenderId: "724795207755",
-  appId: "1:724795207755:web:e08b1726dfb18da5705dce"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
