@@ -1,43 +1,58 @@
 import React, { useEffect, useState } from "react";
-import { getCatalog, updateInventory } from "./firebase";
-import "./App.css";
+import { getCatalogByType, updateInventory, getTodaysOrders } from "./firebase";
 
 function App() {
   const [catalog, setCatalog] = useState([]);
   const [localQuantities, setLocalQuantities] = useState({});
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [catalogType, setCatalogType] = useState("breakfast"); // manual toggle
+  const [catalogType, setCatalogType] = useState("breakfast");
 
   useEffect(() => {
-    setLoading(true);
-    getCatalog(catalogType).then((items) => {
-      const sorted = [...items].sort((a, b) => Number(a.id) - Number(b.id));
-      setCatalog(sorted);
-
-      const initialQuantities = {};
-      sorted.forEach((item) => {
-        initialQuantities[item.id] = item.inventory || 0;
-      });
-      setLocalQuantities(initialQuantities);
-      setLoading(false);
-    });
+    loadCatalog();
   }, [catalogType]);
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadCatalog = async () => {
+    setLoading(true);
+    const items = await getCatalogByType(catalogType);
+    const sorted = [...items].sort((a, b) => Number(a.id) - Number(b.id));
+    setCatalog(sorted);
+
+    const initialQuantities = {};
+sorted.forEach((item) => {
+  initialQuantities[item.id] = item.quantity || 0; // ← Fix here
+});
+    setLocalQuantities(initialQuantities);
+    setLoading(false);
+  };
+
+  const loadOrders = async () => {
+    const data = await getTodaysOrders();
+    setOrders(data);
+  };
 
   const handleChange = (e, id) => {
     const value = e.target.value;
     setLocalQuantities((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSave = async (id) => {
-    const newInventory = Number(localQuantities[id]);
-    if (!isNaN(newInventory)) {
-      await updateInventory(catalogType, id, newInventory);
-      alert("Inventory updated!");
+  const handleSaveAll = async () => {
+    const updates = Object.entries(localQuantities);
+    for (let [id, value] of updates) {
+      const newInventory = Number(value);
+      if (!isNaN(newInventory)) {
+        await updateInventory(catalogType, id, newInventory);
+      }
     }
+    alert("All inventory updated!");
   };
 
   return (
-    <div className="App">
+    <div className="App" style={{ padding: "2rem" }}>
       <h2>📦 Inventory Dashboard</h2>
 
       <div style={{ marginBottom: "1rem" }}>
@@ -56,29 +71,76 @@ function App() {
       {loading ? (
         <p>Loading catalog...</p>
       ) : (
-        <table>
+        <>
+          <table border="1" cellPadding="6" style={{ marginBottom: "1rem" }}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price (₹)</th>
+                <th>Inventory</th>
+              </tr>
+            </thead>
+            <tbody>
+              {catalog.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.id}</td>
+                  <td>{item.name}</td>
+                  <td>₹{item.price}</td>
+                  <td>
+                    <input
+                      type="number"
+                      value={localQuantities[item.id]}
+                      onChange={(e) => handleChange(e, item.id)}
+                      style={{ width: "60px" }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <button onClick={handleSaveAll}>💾 Save Inventory</button>
+        </>
+      )}
+
+      <h3 style={{ marginTop: "2rem" }}>
+        📦 Today's Orders ({orders.length})
+      </h3>
+      {orders.length === 0 ? (
+        <p>No orders placed today.</p>
+      ) : (
+        <table border="1" cellPadding="6">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Order ID</th>
               <th>Name</th>
-              <th>Price (₹)</th>
-              <th>Inventory</th>
+              <th>Phone</th>
+              <th>Items</th>
+              <th>Amount (₹)</th>
+              <th>Time</th>
             </tr>
           </thead>
           <tbody>
-            {catalog.map((item) => (
-              <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.name}</td>
-                <td>₹{item.price}</td>
+            {orders.map((order) => (
+              <tr key={order.id}>
+                <td>{order.id}</td>
+                <td>{order.name}</td>
+                <td>{order.phone}</td>
                 <td>
-                  <input
-                    type="number"
-                    value={localQuantities[item.id]}
-                    onChange={(e) => handleChange(e, item.id)}
-                    style={{ width: "60px", marginRight: "8px" }}
-                  />
-                  <button onClick={() => handleSave(item.id)}>Save</button>
+                  {order.items &&
+                    order.items.map((item) => (
+                      <div key={item.id}>
+                        {item.name} × {item.quantity}
+                      </div>
+                    ))}
+                </td>
+                <td>₹{order.totalAmount}</td>
+                <td>
+                  {new Date(order.createdAt).toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </td>
               </tr>
             ))}

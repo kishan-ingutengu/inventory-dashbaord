@@ -51,7 +51,13 @@ export async function getCatalogByType(type) {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
-// Update item (price or quantity) by ID
+// ✅ Update inventory by catalog type and item ID
+export const updateInventory = async (catalogType, id, quantity) => {
+  const docRef = doc(db, `catalog/${catalogType}/items`, id);
+  await setDoc(docRef, { quantity: Number(quantity) }, { merge: true });
+};
+
+// Optionally update item (price and inventory) — not currently used by UI
 export async function updateItem(type, id, updates) {
   const ref = doc(db, `catalog/${type}/items`, id);
   await updateDoc(ref, updates);
