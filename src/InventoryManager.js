@@ -11,7 +11,7 @@ const InventoryManager = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchQuantities = async () => {
-    const snapshot = await db.collection('inventory').get();
+    const snapshot = await db.collection('catalog/breakfast/items').get();
     const data = {};
     snapshot.forEach(doc => {
       data[doc.id] = doc.data().quantity || 0;
@@ -21,7 +21,7 @@ const InventoryManager = () => {
   };
 
   const updateQuantity = async (id, newQty) => {
-    await db.collection('inventory').doc(id.toString()).set({ quantity: newQty });
+    await db.collection('catalog/breakfast/items').doc(id.toString()).set({ quantity: newQty }, { merge: true });
     setQuantities(prev => ({ ...prev, [id]: newQty }));
   };
 
