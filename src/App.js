@@ -40,16 +40,19 @@ sorted.forEach((item) => {
     setLocalQuantities((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSaveAll = async () => {
-    const updates = Object.entries(localQuantities);
-    for (let [id, value] of updates) {
-      const newInventory = Number(value);
-      if (!isNaN(newInventory)) {
-        await updateInventory(catalogType, id, newInventory);
-      }
+const handleSaveAll = async () => {
+  const updates = Object.entries(localQuantities);
+  for (let [id, value] of updates) {
+    const newInventory = Number(value);
+    if (!isNaN(newInventory)) {
+      await updateInventory(catalogType, id, newInventory);
     }
-    alert("All inventory updated!");
-  };
+  }
+  alert("All inventory updated!");
+
+  // ✅ Reload the updated catalog from Firestore
+  await loadCatalog(); // <-- Add this line
+};
 
   return (
     <div className="App" style={{ padding: "2rem" }}>

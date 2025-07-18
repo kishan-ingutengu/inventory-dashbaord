@@ -55,6 +55,7 @@ export async function getCatalogByType(type) {
 export const updateInventory = async (catalogType, id, quantity) => {
   const docRef = doc(db, `catalog/${catalogType}/items`, id);
   await setDoc(docRef, { quantity: Number(quantity) }, { merge: true });
+  console.log(`✅ Updated ${catalogType}/${id} to quantity ${quantity}`);
 };
 
 // Optionally update item (price and inventory) — not currently used by UI
