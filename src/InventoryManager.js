@@ -44,7 +44,10 @@ function InventoryManager({ catalogType }) {
     setSaving(true);
     setStatus('');
     try {
-      await updateInventory(catalogType, quantities);
+      const updates = Object.entries(quantities); // [ [id, quantity], ... ]
+      for (const [id, quantity] of updates) {
+        await updateInventory(catalogType, id, quantity);
+      }
       setStatus('✅ Inventory saved!');
     } catch (err) {
       console.error('Error saving inventory:', err);
