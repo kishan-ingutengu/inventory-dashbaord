@@ -41,17 +41,17 @@ sorted.forEach((item) => {
   };
 
 const handleSaveAll = async () => {
-  const updates = Object.entries(localQuantities);
-  for (let [id, value] of updates) {
-    const newInventory = Number(value);
-    if (!isNaN(newInventory)) {
-      await updateInventory(catalogType, id, newInventory);
+  const cleaned = {};
+  for (const [id, value] of Object.entries(localQuantities)) {
+    const qty = Number(value);
+    if (!isNaN(qty)) {
+      cleaned[id] = qty;
     }
   }
-  alert("All inventory updated!");
 
-  // ✅ Reload the updated catalog from Firestore
-  await loadCatalog(); // <-- Add this line
+  await updateInventory(catalogType, cleaned); // ✅ Correct batch update
+  alert("✅ All inventory updated!");
+  await loadCatalog(); // ✅ Reload catalog to reflect updates
 };
 
   return (
@@ -93,7 +93,7 @@ const handleSaveAll = async () => {
                   <td>
                     <input
                       type="number"
-                      value={localQuantities[item.id]}
+                      value={Math.max(0, localQuantities[item.id] ?? 0)}
                       onChange={(e) => handleChange(e, item.id)}
                       style={{ width: "60px" }}
                     />
