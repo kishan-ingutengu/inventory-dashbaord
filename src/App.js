@@ -104,49 +104,57 @@ sorted.forEach((item) => {
         </>
       )}
 
-      <h3 style={{ marginTop: "2rem" }}>
-        📦 Today's Orders ({orders.length})
-      </h3>
-      {orders.length === 0 ? (
-        <p>No orders placed today.</p>
-      ) : (
-        <table border="1" cellPadding="6">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Items</th>
-              <th>Amount (₹)</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr key={order.id}>
-                <td>{order.id}</td>
-                <td>{order.name}</td>
-                <td>{order.phone}</td>
-                <td>
-                  {order.items &&
-                    order.items.map((item) => (
-                      <div key={item.id}>
-                        {item.name} × {item.quantity}
-                      </div>
-                    ))}
-                </td>
-                <td>₹{order.totalAmount}</td>
-                <td>
-                  {new Date(order.createdAt).toLocaleTimeString("en-IN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      // ... imports and other code remain unchanged
+
+<h3 style={{ marginTop: "2rem" }}>
+  📦 Today's Orders ({orders.length})
+</h3>
+{orders.length === 0 ? (
+  <p>No orders placed today.</p>
+) : (
+  <table border="1" cellPadding="6">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Items</th>
+        <th>Amount (₹)</th>
+        <th>Delivery Time</th>
+        <th>Address</th>
+        <th>Status</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {orders.map((order) => (
+        <tr key={order.id}>
+          <td>{order.id}</td>
+          <td>{order.name || "—"}</td>
+          <td>{order.from}</td>
+          <td>
+            {order.items &&
+              order.items.map((item, i) => (
+                <div key={i}>
+                  {item.name} × {item.quantity}
+                </div>
+              ))}
+          </td>
+          <td>₹{order.total}</td>
+          <td>{order.deliveryTime || "—"}</td>
+          <td>{order.address || "—"}</td>
+          <td>{order.status || "—"}</td>
+          <td>
+            {new Date(order.createdAt).toLocaleTimeString("en-IN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
     </div>
   );
 }
