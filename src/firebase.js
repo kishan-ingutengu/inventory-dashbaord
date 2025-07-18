@@ -7,7 +7,9 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  where
+  where,
+  writeBatch,
+  setDoc
 } from "firebase/firestore";
 
 // Firebase config from .env
@@ -52,10 +54,17 @@ export async function getCatalogByType(type) {
 }
 
 // ✅ Update inventory by catalog type and item ID
-export const updateInventory = async (catalogType, id, quantity) => {
-  const docRef = doc(db, `catalog/${catalogType}/items`, id);
-  await setDoc(docRef, { quantity: Number(quantity) }, { merge: true });
-  console.log(`✅ Updated ${catalogType}/${id} to quantity ${quantity}`);
+export const updateInventory = async (catalogType, updatedQuantities) => {
+  const batch = writeBatch(db);
+  const baseRef = collection(db, `catalog/${catalogType}/items`);
+
+  for (const [id, quantity] of Object.entries(updatedQuantities)) {
+    const docRef = doc(baseRef, id);
+    batch.set(docRef, { quantity: Number(quantity) }, { merge: true });
+  }
+
+  await batch.commit();
+  console.log(`✅ Batch updated ${Object.keys(updatedQuantities).length} items`);
 };
 
 // Optionally update item (price and inventory) — not currently used by UI

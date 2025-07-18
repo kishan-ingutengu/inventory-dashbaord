@@ -1,83 +1,94 @@
+// src/InventoryManager.js
 import React, { useEffect, useState } from 'react';
-import { db } from './firebase';
-import catalog from './catalog.json';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, TextField, Button, Typography
-} from '@mui/material';
+  getCatalogByType,
+  updateInventory,
+} from './firebase'; // Ensure this points to your Firestore helpers
 
-const InventoryManager = () => {
+function InventoryManager({ catalogType }) {
+  const [catalog, setCatalog] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [loading, setLoading] = useState(true);
-
-  const fetchQuantities = async () => {
-    const snapshot = await db.collection('catalog/breakfast/items').get();
-    const data = {};
-    snapshot.forEach(doc => {
-      data[doc.id] = doc.data().quantity || 0;
-    });
-    setQuantities(data);
-    setLoading(false);
-  };
-
-  const updateQuantity = async (id, newQty) => {
-    await db.collection('catalog/breakfast/items').doc(id.toString()).set({ quantity: newQty }, { merge: true });
-    setQuantities(prev => ({ ...prev, [id]: newQty }));
-  };
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
-    fetchQuantities();
-  }, []);
+    const fetchCatalog = async () => {
+      try {
+        const items = await getCatalogByType(catalogType); // e.g., 'breakfast' or 'chats'
+        setCatalog(items);
 
-  if (loading) return <Typography>Loading inventory...</Typography>;
+        const qty = {};
+        items.forEach((item) => {
+          qty[item.id] = item.quantity ?? 0;
+        });
+        setQuantities(qty);
+      } catch (err) {
+        console.error('Failed to fetch catalog:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCatalog();
+  }, [catalogType]);
+
+  const handleQuantityChange = (id, value) => {
+    setQuantities({
+      ...quantities,
+      [id]: parseInt(value, 10) || 0,
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setStatus('');
+    try {
+      await updateInventory(catalogType, quantities);
+      setStatus('✅ Inventory saved!');
+    } catch (err) {
+      console.error('Error saving inventory:', err);
+      setStatus('❌ Failed to save inventory');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
-    <TableContainer component={Paper}>
-      <Typography variant="h5" style={{ padding: '16px' }}>📦 Inventory Dashboard</Typography>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell><b>ID</b></TableCell>
-            <TableCell><b>Name</b></TableCell>
-            <TableCell><b>Price (₹)</b></TableCell>
-            <TableCell><b>Quantity</b></TableCell>
-            <TableCell><b>Update</b></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {catalog.map(item => (
-            <TableRow key={item.id}>
-              <TableCell>{item.id}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>₹{item.price}</TableCell>
-              <TableCell>
-                <TextField
+    <div style={{ padding: '2rem' }}>
+      <h2>{catalogType.charAt(0).toUpperCase() + catalogType.slice(1)} Inventory</h2>
+      <table border="1" cellPadding="10" cellSpacing="0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Quantity (0 = hide)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {catalog.map((item) => (
+            <tr key={item.id}>
+              <td>{item.name}</td>
+              <td>
+                <input
                   type="number"
-                  size="small"
                   value={quantities[item.id] ?? 0}
-                  onChange={e =>
-                    setQuantities(prev => ({
-                      ...prev,
-                      [item.id]: parseInt(e.target.value || '0')
-                    }))
-                  }
+                  onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                  min="0"
                 />
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => updateQuantity(item.id, quantities[item.id])}
-                >
-                  Save
-                </Button>
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+        </tbody>
+      </table>
+      <br />
+      <button onClick={handleSave} disabled={saving}>
+        {saving ? 'Saving...' : '💾 Save Inventory'}
+      </button>
+      <p>{status}</p>
+    </div>
   );
-};
+}
 
 export default InventoryManager;
